@@ -1,3 +1,6 @@
+-- most recent wallet balance of VIP users
+-- PROD.DWH.D_PLAYER_EOD_BALANCE can be used for yesterday's data but it displayes only players with activity for each date
+
 with players as (
 select
     player_id,
@@ -6,10 +9,10 @@ select
     status
 from PROD.DWH.D_PLAYER
 where value_tier_name = 'VIP'
-and business_domain_id =  3
-and is_test_account <> 1
-and status <> 'PLAYER_CLOSED'
-and status <> 'SUSPENDED'
+    and business_domain_id =  3
+    and is_test_account <> 1
+    and status <> 'PLAYER_CLOSED'
+    and status <> 'SUSPENDED'
 group by all
 ),
 
@@ -35,9 +38,9 @@ WHERE rn = 1
 )
 
 select 
-fin.*,
-username,
-email,
+    fin.*,
+    username,
+    email,
 from fin
 left join players
     on fin.player_id = players.player_id
