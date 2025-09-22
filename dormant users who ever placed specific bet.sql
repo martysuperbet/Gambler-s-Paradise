@@ -1,12 +1,14 @@
--- Dormant którzy obstawili kiedykolwiek
+-- List of dormant users who have ever placed a bet on Polish leagues II, II or IV
+-- used for superscore Marcin Bratkowski
+
 with players as (
 select
-player_id,
-has_marketing_consent,
+    player_id,
+    has_marketing_consent,
 from PROD.DWH.D_PLAYER_MARKETING_PROPERTY
 where business_domain_id = 3 
-and current_timestamp()  between valid_from_dt and valid_to_dt
-and has_marketing_consent = 1
+    and current_timestamp()  between valid_from_dt and valid_to_dt
+    and has_marketing_consent = 1
 ),
 
 details as (
@@ -24,10 +26,10 @@ where business_market_id = 3
 
 fin as (
 select
-gg.player_id,
-username,
-email,
-count(distinct ticket_code) as tickets
+    gg.player_id,
+    username,
+    email,
+    count(distinct ticket_code) as tickets
 from (
     select
         ff.player_id,
@@ -62,8 +64,8 @@ group by 1
 )
 
 select
-cc.*,
-vv.last_active_day,
+    cc.*,
+    vv.last_active_day,
 case when last_activity_was_days_ago > 31 and last_activity_was_days_ago <= 90 Then 'Churn'
     when last_activity_was_days_ago > 90 and last_activity_was_days_ago <= 364 Then 'Dormant'
     when last_activity_was_days_ago is null then 'No activity'
