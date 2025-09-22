@@ -1,5 +1,5 @@
---we wtorek będziemy potrzebować listę wszystkich klientów którzy przez ostanie 3 miesiące nie postawili żadnego kuponu na SGA
-
+-- Actives in current year who have not placed SGA bet in the past 3 months 
+-- Sportsbook Robert Madzia 
 
 with player as (
 select
@@ -44,8 +44,7 @@ Select
     PLAYER_ID,              
     MAX(reporting_date) as last_active_day,     
     DATEDIFF('day',  CURRENT_DATE()-1,   MAX(reporting_date) )*-1 as last_activity_was_days_ago 
-From PROD.DM_PLAYER.F_PLAYER_PRODUCT_PERFORMANCE_DAILY
---"PROD"."LEGACY_REPORTING_PL"."SB_PERFORMANCE"     
+From PROD.DM_PLAYER.F_PLAYER_PRODUCT_PERFORMANCE_DAILY  
 where reporting_date <= CURRENT_DATE()-1
     and business_line_id=1 
     and business_domain_id = 3
