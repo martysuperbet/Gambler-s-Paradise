@@ -1,8 +1,10 @@
--- liga 2,3,4 polish team with marketing consent - Marcin
+-- List of players who placed at least 5 bets on league 2,3,4 in 2025, with marketing consent
+-- Marcin Bratkowski
+ 
 with players as (
 select
-player_id,
-has_marketing_consent,
+    player_id,
+    has_marketing_consent,
 from PROD.DWH.D_PLAYER_MARKETING_PROPERTY
 where business_domain_id = 3 
 and current_timestamp()  between valid_from_dt and valid_to_dt
@@ -23,10 +25,10 @@ where business_market_id = 3
 )
 
 select
-gg.player_id,
-username,
-email,
-count(distinct ticket_code) as tickets
+    gg.player_id,
+    username,
+    email,
+    count(distinct ticket_code) as tickets
 from (
     select
         ff.player_id,
@@ -39,7 +41,6 @@ from (
     and tournament_name like '%Poland - Liga IV%'
     or tournament_name like '%Poland - III Liga%'
     or tournament_name like '%Poland - II Liga%'
-    --and accepted_dt_local::date >= '2025-01-01'
     group by all
 ) gg
 left join details
