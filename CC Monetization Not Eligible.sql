@@ -1,7 +1,7 @@
 select 
     mm.creator,
     player_id
-from PROD.BI.MACZKA_LIST mm
+from PROD.BI.MACZKA_LIST mm --uploaded excel (one-off)
 left join 
     ( select 
         date_trunc(month, CONVERT_TIMEZONE('UTC','Europe/Warsaw',reporting_date)) as month,
