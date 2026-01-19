@@ -184,3 +184,125 @@ LEFT JOIN sg_hunch_final sg
 GROUP BY all
 order by player_group asc
 
+----------------------------------------------
+--click rate 
+--bonus assigned/used
+
+with comms as (
+select 
+    campaign_id,
+    campaign_name,
+    campaign_send_date as reporting_date,
+    case when message_type = 'PUSH_IOS' then 'PUSH'
+        when message_type = 'PUSH_ANDROID' then 'PUSH'
+        else message_type
+    end as message_type,
+    user_id as player_id,
+    CASE
+    -- 23rd
+    WHEN campaign_id = '128808179' THEN 'group A'
+    WHEN campaign_id = '128808197' THEN 'group B'
+    WHEN campaign_id = '128808217' THEN 'group C'
+    -- 25th
+    WHEN campaign_id = '128836576' THEN 'group A'
+    WHEN campaign_id = '128836584' THEN 'group B'
+    WHEN campaign_id = '128836702' THEN 'group C'
+    -- 26th
+    WHEN campaign_id = '128852195' THEN 'group A'
+    WHEN campaign_id = '128853431' THEN 'group B'
+    WHEN campaign_id = '128852203' THEN 'group C'
+    -- 28th
+    WHEN campaign_id = '128874702' THEN 'group A'
+    WHEN campaign_id = '128874832' THEN 'group B'
+    WHEN campaign_id = '128874886' THEN 'group C'
+    -- 29th
+    WHEN campaign_id = '128892322' THEN 'group A'
+    WHEN campaign_id = '128892377' THEN 'group B'
+    WHEN campaign_id = '128892414' THEN 'group C'
+    -- 30th 
+    WHEN campaign_id = '128905437' THEN 'group A'
+    WHEN campaign_id = '128905475' THEN 'group B'
+    end as player_group,
+    count (distinct case when interaction_type = 'sent' then user_id else null end) as sends,
+    count(distinct case when interaction_type = 'bounce' then user_id else null end) as bounces,
+    count(distinct case when interaction_type = 'click' then user_id else null end) as distinct_clicks,
+    count(distinct case when interaction_type = 'open' then user_id else null end) as distinct_opens
+
+from ods_xp.campaign 
+where campaign_id in 
+(/*23*/'128808179', '128808197', '128808217', /*24*/ '128823464', /*25*/ '128836576', '128836584', '128836702',  /*26*/ '128852195', '128853431','128852203', /*27*/ '128871810', /*28*/ '128874702', '128874832','128874886', /*29*/ '128892322', '128892377', '128892414', /*30*/ '128905437', '128905475')
+group by all
+),
+
+comms_grouped as (
+select
+    campaign_id,
+    campaign_name,
+    reporting_date::date as reporting_date,
+    message_type,
+    player_group,
+    count(distinct player_id) as players,
+    SUM(distinct_clicks) as click,
+    SUM(distinct_clicks)/sum(sends) as click_rate,
+    SUM(bounces)/sum(sends) as bounce_rate
+from comms
+group by all
+order by reporting_date desc
+),
+
+player_matrix as (
+SELECT 
+    pm.player_id,
+    pm.player_group,
+    pm.reporting_date,
+    message_type,
+from comms pm
+group by all
+),
+
+bonuses as (
+select
+    pp.player_id,
+    player_group,
+    message_type,
+    pp.bonus_code,
+    pp.bonus_type,   
+    pp.bonus_name,
+    pp.bonus_status,
+    pp.bonus_rewarded_dt,
+    pp.bonus_rewarded_amount,
+    pp.bonus_redeemed_dt,
+    pp.bonus_redeemed_amount,
+    bonus_cost_amount
+from PROD.DWH.D_PLAYER_BONUS pp
+left join player_matrix mm
+    on pp.player_id = mm.player_id
+    and pp.bonus_rewarded_dt::date = mm.reporting_date
+where business_domain_id = 3 
+and campaign_id in (/*23*/'6ea3d836-860a-490e-89e2-e3b8c91e1d3f','f1dfb401-7cf5-40cf-90b7-e710bee42f3f','69a40d40-dca9-4b55-ac43-082a51d09347',/*25*/ 'f681fc92-95b7-4206-91e3-f1b973d3aa71', 'aa62dad5-36ed-4eec-bc7a-f6d2329cc12b', /*26*/ 'dbdbc3f6-ea7d-4ef4-8bc0-39a65e2517bb','4d9b40aa-3709-4a28-9b65-f7535074cdd3', /*28*/ '66c20449-558e-40e8-8fcf-f0d5f7b8f2f2', '03dac2d1-45c4-4620-8737-cda2b1e25c74','34fa3481-fe51-476a-83a5-025e89177822',/*29*/'818e00bb-ab05-4d16-9f9f-67ad953ebcf1','2b4308e2-db1d-4fe8-a702-f4f1a933e484', 'a421fd7f-493d-45c1-8bb0-dfc381e564c0')
+order by bonus_redeemed_amount desc
+--24 & 27 sprawdzic superspin
+--30 sprawdzic SuperGame
+),
+
+bonus_grouped as (
+select
+--bonus_code,
+bonus_name,
+--message_type,
+--player_group,
+--bonus_rewarded_amount,
+bonus_rewarded_dt::date,
+count(player_id) as bonusses_assigned,
+count(case when bonus_status = 'COMPLETED' then bonus_rewarded_dt end) as redeems,
+sum(bonus_cost_amount) as bonus_cost,
+from bonuses 
+group by all
+order by bonus_rewarded_dt::date asc 
+)
+
+select * from bonus_grouped
+
+--24 & 27 sprawdzic superspin
+--30 sprawdzic SuperGame
+--sprawdzić czy freebety się dobrze zapisują (wszystkie na 0) DONE
